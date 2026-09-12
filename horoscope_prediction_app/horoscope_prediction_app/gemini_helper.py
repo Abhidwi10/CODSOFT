@@ -1,9 +1,9 @@
-import os
-import google.generativeai as genai
+import streamlit as st
+import requests
 
-genai.configure(
-    api_key=os.environ["GEMINI_API_KEY"]
-)
+
+API_KEY = st.secrets["GEMINI_API_KEY"]
+
 
 def generate_horoscope(name, dob, birth_time, birth_place):
 
@@ -17,7 +17,7 @@ def generate_horoscope(name, dob, birth_time, birth_place):
 
     Generate a detailed horoscope prediction.
 
-    Include the following sections:
+    Include:
 
     1. Personality Analysis
     2. Career Prediction
@@ -52,21 +52,11 @@ def generate_horoscope(name, dob, birth_time, birth_place):
         ]
     }
 
-    try:
+    response = requests.post(url, json=data)
 
-        response = requests.post(
-            url,
-            json=data,
-            timeout=60
-        )
+    if response.status_code != 200:
+        return "Gemini API Error: " + response.text
 
-        if response.status_code != 200:
-            return "Gemini API Error: " + response.text
+    result = response.json()
 
-        result = response.json()
-
-        return result["candidates"][0]["content"]["parts"][0]["text"]
-
-    except Exception as e:
-
-        return "Error while connecting to Gemini API: " + str(e)
+    return result["candidates"][0]["content"]["parts"][0]["text"]
